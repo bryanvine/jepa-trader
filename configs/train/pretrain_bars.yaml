@@ -1,0 +1,33 @@
+# Block JEPA pretraining on 15m bars.
+data_dir: /apps/jepa-trader/data/bars_15m
+window: 64
+stride: 4
+val_stride: 16
+batch_size: 1024
+num_workers: 8
+
+mask:
+  variant: block
+  min_block: 2
+  max_block: 6
+
+optim:
+  lr: 1.0e-3
+  weight_decay: 0.04
+  betas: [0.9, 0.95]
+  grad_clip: 1.0
+
+schedule:
+  total_steps: 10000
+  warmup_steps: 1000
+
+ema:
+  base: 0.998
+  final: 1.0
+
+log_every: 100
+val_every: 1000
+val_batches: 60
+out_dir: /apps/jepa-trader/experiments
+run_name: jepa_bars_v1
+seed: 0

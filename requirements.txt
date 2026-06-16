@@ -1,0 +1,18 @@
+# Core DL stack is inherited from the system interpreter via
+#   python3 -m venv .venv --system-site-packages
+# (torch 2.11.0+cu130, CUDA 13.0, numpy). Do NOT pip-install torch here —
+# it would shadow the working CUDA build.
+#
+# The packages below are the extras layered on top:
+pyarrow         # read raw LOB parquet
+polars          # fast columnar processing of LOB
+pandas          # convenience / interop
+scikit-learn    # linear probes, metrics, baselines
+xgboost         # gradient-boosting baseline
+pyyaml          # experiment configs
+tqdm            # progress
+matplotlib      # figures for the paper
+einops          # tensor reshaping in the model
+psycopg2-binary # TimescaleDB access (live DB export)
+rich            # pretty logging
+tensorboard     # training curves

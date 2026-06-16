@@ -1,0 +1,24 @@
+# Environments
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Data & artifacts (large; reproducible from source)
+data/
+experiments/
+*.npz
+*.npy
+*.parquet
+*.pt
+*.ckpt
+*.log
+# paper figures are kept in the repo (small, paper deliverables)
+paper/figures/*.pdf
+
+# Secrets
+.env
+*.secret
+
+# OS
+.DS_Store

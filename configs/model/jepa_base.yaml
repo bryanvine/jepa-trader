@@ -1,0 +1,12 @@
+# TS-JEPA base encoder/predictor (sized small; 8GB has huge headroom to scale up).
+n_features: 29
+window: 128          # 12.8 s of 100ms grid
+patch_len: 8         # -> 16 patches (0.8 s each)
+dim: 192
+depth: 6
+heads: 6
+pred_dim: 128
+pred_depth: 4
+pred_heads: 4
+mlp_ratio: 4.0
+dropout: 0.0

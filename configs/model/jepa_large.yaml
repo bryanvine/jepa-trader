@@ -1,0 +1,12 @@
+# Scaled TS-JEPA for the 4080 Super (16GB) — does scale change the HFT verdict?
+n_features: 29
+window: 128
+patch_len: 8
+dim: 384
+depth: 10
+heads: 8
+pred_dim: 192
+pred_depth: 6
+pred_heads: 6
+mlp_ratio: 4.0
+dropout: 0.1

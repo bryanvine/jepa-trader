@@ -1,0 +1,33 @@
+# Scaled LOB pretraining for the 4080 (block JEPA, bigger batch + more steps).
+data_dir: /home/bryan/apps/jepa-trader/data/spy_qqq_lob
+window: 128
+stride: 8
+val_stride: 64
+batch_size: 2048
+num_workers: 12
+
+mask:
+  variant: block
+  min_block: 2
+  max_block: 6
+
+optim:
+  lr: 1.2e-3
+  weight_decay: 0.04
+  betas: [0.9, 0.95]
+  grad_clip: 1.0
+
+schedule:
+  total_steps: 20000
+  warmup_steps: 1500
+
+ema:
+  base: 0.998
+  final: 1.0
+
+log_every: 200
+val_every: 2000
+val_batches: 60
+out_dir: /home/bryan/apps/jepa-trader/experiments
+run_name: jepa_large_4080
+seed: 0

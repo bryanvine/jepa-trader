@@ -1,0 +1,12 @@
+# TS-JEPA for 15m bars: window 64 bars (16h), 16 patches of 4 bars (1h each).
+n_features: 25
+window: 64
+patch_len: 4
+dim: 192
+depth: 6
+heads: 6
+pred_dim: 128
+pred_depth: 4
+pred_heads: 4
+mlp_ratio: 4.0
+dropout: 0.1

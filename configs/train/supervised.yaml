@@ -1,0 +1,19 @@
+# Supervised-from-scratch baseline (same encoder, trained end-to-end on returns).
+data_dir: /apps/jepa-trader/data/spy_qqq_lob
+window: 128
+stride: 8
+val_stride: 64
+eval_stride: 32
+horizons: [1, 5, 10, 30, 60, 100, 300, 600]
+batch_size: 1024
+num_workers: 8
+pool: last            # alpha lives in the most recent snapshot
+lr: 1.0e-3
+weight_decay: 0.04
+huber_beta: 1.0
+total_steps: 6000
+warmup_steps: 500
+val_every: 500
+out_dir: /apps/jepa-trader/experiments
+run_name: supervised_v1
+seed: 0
