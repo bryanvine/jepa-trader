@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Beyond Price: Implied Volatility and Long-History Sentiment as Trading Signals</title>
-<meta name="description" content="Paper 3 of the JEPA-Trader project: two new free-data modalities — Deribit crypto implied volatility (DVOL) and 11 years of FinBERT-scored news sentiment (FNSPID). Implied vol beats the realized-vol baseline and carries a persistent risk premium; the prior contrarian-sentiment 'bright spot' dissolves under a well-powered test.">
+<meta name="description" content="Part 3 of the JEPA-Trader project: two new free-data modalities — Deribit crypto implied volatility (DVOL) and 11 years of FinBERT-scored news sentiment (FNSPID). Implied vol beats the realized-vol baseline and carries a persistent risk premium; the prior contrarian-sentiment 'bright spot' dissolves under a well-powered test.">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon-180.png">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Beyond Price: Implied Volatility &amp; Long-History Sentiment (JEPA-Trader, Paper 3)">
+<meta property="og:title" content="Beyond Price: Implied Volatility &amp; Long-History Sentiment (JEPA-Trader, Part 3)">
 <meta property="og:description" content="Crypto implied vol beats the realized-vol baseline (IC 0.67) and carries a persistent +7.7-vol-point risk premium — the first baseline-beating free signal in the project. Meanwhile 11 years of news sentiment dissolves the prior contrarian bright spot.">
 <meta property="og:url" content="https://bryanvine.github.io/jepa-trader/paper3.html">
 <meta property="og:image" content="https://bryanvine.github.io/jepa-trader/og-jepa.png">
@@ -69,11 +69,11 @@
 <div class="wrap">
 
 <header class="title">
-  <div class="tag">JEPA-Trader · Paper 3 · Quant Research</div>
+  <div class="tag">JEPA-Trader · Part 3 · Quant Research</div>
   <h1>Beyond Price:<br>Implied Volatility and Long-History Sentiment as Trading Signals</h1>
   <p class="byline">
     <strong>Bryan Vine</strong> · June 2026 ·
-    <a href="index.html">← Papers 1–2 (the JEPA feasibility study)</a> ·
+    <a href="index.html">← Parts 1–2 (the JEPA feasibility study)</a> ·
     <a href="https://github.com/bryanvine/jepa-trader" target="_blank" rel="noopener">code &amp; full research log ↗</a>
   </p>
   <p class="nav">
@@ -83,11 +83,11 @@
 
 <section class="abstract" id="abstract">
   <h3>Abstract</h3>
-  <p>Papers 1–2 of this project found that across limit-order-book microstructure, bars, a
+  <p>Parts 1–2 of this project found that across limit-order-book microstructure, bars, a
   cross-sectional graph model, a latent world-model, news sentiment, and crypto funding, a
   Time-Series JEPA learns valid representations but never beats a simple linear baseline, and no
   robust net-of-cost <em>directional</em> alpha survives in freely-available data. The two most
-  promising untested levers were a longer sentiment history and a genuinely new modality. Paper 3
+  promising untested levers were a longer sentiment history and a genuinely new modality. Part 3
   acquires both for free and tests them with the same leak-safe, walk-forward, deflated-Sharpe
   rigor. <span class="key">Crypto implied volatility</span> (Deribit&rsquo;s DVOL index, 2021–2026)
   is the first signal in the project to clearly beat its trivial baseline: it predicts forward
@@ -110,7 +110,7 @@
 </div>
 
 <h2 id="intro">1. Introduction</h2>
-<p>The first two papers of this project [<a href="index.html">JEPA-Trader I–II</a>] reached a
+<p>The first two parts of this project [<a href="index.html">JEPA-Trader I–II</a>] reached a
 consistent, honestly-reported negative: self-supervised JEPA representations of market data match
 supervised ones but never beat a linear model, and no freely-available <em>directional</em> signal
 produces robust net-of-cost profit. Two levers were explicitly left open as the most likely to
@@ -144,7 +144,7 @@ are computed on non-overlapping sub-samples, and every Sharpe is reported with a
 deflated correction for the number of trials [<a href="#r4">4</a>].</p>
 
 <figure>
-  <img src="figures/paper3_summary.png" alt="Paper 3 summary: implied vs realized vol, vol-risk-premium per year, sentiment long-short">
+  <img src="figures/paper3_summary.png" alt="Part 3 summary: implied vs realized vol, vol-risk-premium per year, sentiment long-short">
   <figcaption><strong>Figure 1.</strong> <strong>Left:</strong> BTC implied volatility (DVOL) sits
   above subsequently-realized volatility — the vol-risk-premium, visible as the shaded gap.
   <strong>Centre:</strong> the premium is positive every year (declining as the market matures).
@@ -167,7 +167,7 @@ forward realized volatility than trailing realized volatility itself.</p>
 </table>
 <p>Implied volatility dominates the trailing-vol term in the joint regression — it carries genuine
 forward information beyond volatility-clustering, exactly as option-pricing theory predicts and
-unlike any directional signal tested in Papers 1–2.</p>
+unlike any directional signal tested in Parts 1–2.</p>
 
 <h3>3.2 A persistent vol-risk-premium</h3>
 <p>Define the realized vol-risk-premium as implied minus <em>subsequently-realized</em> volatility,
@@ -192,7 +192,7 @@ dimension is not. The honest caveat: harvesting the premium requires <em>selling
 rigorous claim is &ldquo;a real premium exists,&rdquo; not &ldquo;free alpha found.&rdquo;</blockquote>
 
 <h2 id="arms">4. Arm S — long-history news sentiment</h2>
-<p>Papers 1–2&rsquo;s single non-price bright spot was a weak <em>contrarian</em> news-sentiment
+<p>Parts 1–2&rsquo;s single non-price bright spot was a weak <em>contrarian</em> news-sentiment
 effect — but it rested on five months of data (~28 independent cohorts). With 11 years and 1.4M
 aligned observations, it disappears.</p>
 <table>
@@ -222,7 +222,7 @@ microstructure, cross-section, world-model, funding, and now sentiment at decade
 survive a cost-aware, multi-period test. The lone real edge is a risk <em>compensation</em> (the
 vol-risk-premium), whose net harvestability is an honest open question that requires
 options-execution data this study deliberately avoids paying for.</p>
-<p>This also explains why no JEPA appears in Paper 3. Neither finding needs one: the volatility
+<p>This also explains why no JEPA appears in Part 3. Neither finding needs one: the volatility
 signal is a one-feature near-linear relation a ridge captures in full, the sentiment arm has
 essentially no signal to represent, and a 3,822-point daily series is far too small for
 self-supervised pretraining. Consistent with the whole project, representation learning would match
@@ -238,7 +238,7 @@ than merely real.</p>
   <li id="r2">D. Araci. <em>FinBERT: Financial Sentiment Analysis with Pre-trained Language Models.</em> 2019. arXiv:1908.10063. (Model: ProsusAI/finbert.)</li>
   <li id="r3">Deribit. <em>DVOL — Deribit Implied Volatility Index</em> (BTC/ETH), public API. 2021–2026.</li>
   <li id="r4">D. Bailey, M. López de Prado. <em>The Deflated Sharpe Ratio.</em> J. Portfolio Management, 2014.</li>
-  <li id="r5">B. Vine. <em>Does JEPA Find Alpha? (JEPA-Trader, Papers 1–2.)</em> 2026. <a href="index.html">index.html</a>.</li>
+  <li id="r5">B. Vine. <em>Does JEPA Find Alpha? (JEPA-Trader, Parts 1–2.)</em> 2026. <a href="index.html">index.html</a>.</li>
 </ol>
 
 <footer>
