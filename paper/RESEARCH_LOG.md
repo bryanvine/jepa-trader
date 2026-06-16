@@ -428,6 +428,51 @@ contrarian sentiment strategy (is it tradeable?); (2) **price + sentiment JEPA f
 (does fusing beat either modality alone?); (3) crypto funding-carry arm. Code + first
 result pushed to `github.com/bryanvine/jepa-trader`.
 
+### 7.11 Sentiment — tradeability + fusion test (both negative-ish)
+- **Tradeable standalone?** Causal cross-sectional long-short that *fades* sentiment
+  surprise (`scripts/08_sentiment_backtest.py`). Pooled daily-cohort net ≈ +13 bps/cohort
+  @4 bps (k=2) *looks* positive, but the honest **non-overlapping Sharpe is only +0.16
+  @4 bps** (negative @8 bps), unstable across k, and dominated by ~1-cohort months
+  (Mar/Apr) — only ~28 independent periods. **Not robustly tradeable** on this 5-month window.
+- **Does fusion add value?** Feature-level ridge IC (test May–Jun, `scripts/09_fusion_features.py`):
+  price-only **−0.02**, sentiment-only **+0.080**, price+sentiment **+0.006**. **Fusion
+  HURTS** — daily price is efficient, so it only dilutes the sentiment signal. ⇒ the
+  signal is entirely in the sentiment modality; a **price+sentiment JEPA fusion is low-EV**.
+- **Multi-modal verdict:** sentiment is the lone non-price signal (weak, contrarian, daily),
+  not standalone-tradeable on 5 months, and there is nothing in price to fuse. The remaining
+  real shot at tradeable alpha is **crypto funding carry** (§7.12, in progress).
+
+### 7.12 Crypto arm — funding doesn't predict price; carry too small to harvest
+66–73 coins, 2024–2026, 8-hourly funding as-of-aligned to 1h bars
+(`scripts/10_crypto_funding.py`, `11_crypto_carry.py`). (1) **Funding does NOT predict
+forward price** (cross-sectional IC ≈ −0.003 at 8/24/72 h) — crypto price is efficient
+like equities, so a crypto-price JEPA won't beat baselines. (2) **Carry backtest**
+(short high-funding / long low-funding tercile, harvest + price, net): harvested spread
+is only **+0.3 bps/8 h (~3%/yr gross)**, while the price term is **−4.7 bps/8 h** (high-
+funding coins keep *rising* — funding tracks **momentum**, not reversal), so the fade
+**loses** (Sharpe −1.6 at zero cost, worse with fees). Delta-neutral would isolate the
++0.3 bps but that's tiny and cost-eaten. ⇒ **No tradeable funding edge** on this universe.
+
+### 7.13 Final research synthesis (research complete)
+Tested every freely-available signal with leak-safe, walk-forward / multi-period rigor:
+| arm | signal? | beats linear? | tradeable net of cost? |
+|---|---|---|---|
+| HFT LOB (0.1–60 s) | yes, strong but micro | no (JEPA ≈ supervised ≤ linear OFI) | **no** — spread-dominated |
+| Bars 15 m (walk-forward) | weak | no | **no** — within-noise |
+| Model scale (6×, 4080) | — | no change | — |
+| News sentiment (daily) | **weak contrarian, sign-persistent** | (best non-price) | **no** — ~0.16 Sharpe, thin data |
+| Price+sentiment fusion | — | fusion *hurts* (price is noise) | **no** |
+| Crypto funding carry | ~none | — | **no** — carry tiny, fade loses to momentum |
+
+**Thesis:** JEPA reliably learns valid label-free representations (≈ supervised), but
+across frequency, asset class, modality, and scale it **never beats a simple linear
+model**, and **no robust net-of-cost alpha** exists in these freely-available signals —
+markets are efficient w.r.t. the data we can access for free; costs and signal-linearity
+are the binding constraints, not model capacity. The lone bright spot (weak contrarian
+news sentiment) is not standalone-tradeable on 5 months. A rigorous, honest,
+publishable feasibility result. Untested levers requiring paid data / new framing:
+L3 market-making (queue/fill), longer sentiment history, options/IV, futures MBO.
+
 ## 8. References (to expand)
 - LeCun (2022), *A Path Towards Autonomous Machine Intelligence* (JEPA).
 - Assran et al. (2023), *Self-Supervised Learning from Images with a
