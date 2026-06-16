@@ -34,6 +34,7 @@
         color:#fff; background:var(--accent); padding:2px 9px; border-radius:99px; margin-bottom:14px; }
   h2{ font-size:22px; margin:46px 0 12px; padding-top:8px; letter-spacing:-0.01em; }
   h3{ font-size:18px; margin:30px 0 8px; color:#222; }
+  h4{ font-size:15px; margin:20px 0 6px; color:#333; font-weight:600; }
   p,li{ color:#23262b; }
   a{ color:var(--accent); }
   .abstract{ background:#f7f9fb; border:1px solid var(--rule); border-left:4px solid var(--accent);
@@ -93,7 +94,12 @@
   <span class="key">no robust net-of-cost trading edge</span>. The binding constraints are transaction
   costs and the near-linear, near-Markovian nature of the accessible signal &mdash; not model capacity.
   The single bright spot, a weak <em>contrarian</em> news-sentiment effect (information diffusion,
-  not microstructure), is directionally persistent but not standalone-tradeable on five months of data.
+  not microstructure), is directionally persistent but not standalone-tradeable on five months of data. We further test three architectural escapes &mdash; a
+  <span class="key">cross-sectional Graph-JEPA</span> over the whole universe, a <span class="key">latent
+  world-model with planning</span>, and <span class="key">predictive-uncertainty</span> signals &mdash; on a
+  survivorship-free universe with walk-forward validation; each captures genuinely real structure (notably,
+  cross-sectional context beats a per-symbol model), yet none beats the matched simple baseline, and effective-rank
+  and non-JEPA-baseline controls confirm the limit is the signal, not the architecture.
   We argue these negative-with-nuance results are themselves the contribution: they cleanly separate
   &ldquo;the self-supervision works&rdquo; from &ldquo;there is exploitable alpha here.&rdquo;</p>
 </section>
@@ -268,7 +274,62 @@ and the funding-<em>carry</em> spread is a mere +0.3&nbsp;bps/8&nbsp;h while the
 <em>loses</em> to price momentum (&minus;4.7&nbsp;bps/8&nbsp;h). No tradeable funding edge exists on this
 universe.</p>
 
-<h3>4.9 Summary of arms</h3>
+<h3>4.9 Round 2: changing the question &mdash; cross-section, uncertainty, world-models</h3>
+<p>The arms above all ask &ldquo;does a JEPA representation linearly predict returns better than a baseline?&rdquo;
+and answer <em>no</em>. Guided by a survey of the JEPA literature, we next test the three ideas most likely to
+<em>change the question</em> toward where self-supervision is shown to pay &mdash; cross-sectional structure,
+non-directional targets, and planning. In every case the JEPA <span class="key">does capture genuinely real
+structure</span>; it simply never beats the matched simple baseline.</p>
+<figure>
+  <img src="figures/round2_summary.png" alt="Round-2 summary: cross-sectional rank-IC, energy vs volatility, world-model rollout">
+  <figcaption><strong>Figure 5.</strong> Round-2 arms. <strong>Left:</strong> cross-sectional rank-IC &mdash; the
+  cross-sectional JEPA beats its per-symbol ablation yet trails the linear ridge. <strong>Centre:</strong> the
+  JEPA&rsquo;s latent prediction-error (&ldquo;energy&rdquo;) predicts forward volatility, but trailing realized
+  volatility dominates it. <strong>Right:</strong> a learned latent world-model rolls forward with low error, yet
+  its decoded return forecasts trail the direct probe and the linear baseline.</figcaption>
+</figure>
+
+<h4>4.9.1 Cross-sectional Graph-JEPA</h4>
+<p>We model the whole universe as a graph [<a href="#r10">10</a>]: a per-symbol temporal encoder emits one token per symbol at each
+timestamp, a permutation-equivariant set-Transformer attends <em>across</em> symbols, and the JEPA objective masks
+a random subset of symbols and predicts their context-aware latents from the rest. On a <span class="key">survivorship-free
+panel of 449 names</span> (including those delisted in a March-2026 universe collapse), with one frozen pretraining
+and <em>expanding walk-forward folds</em>, the picture is decisive under non-overlapping \(t\)-statistics: the only
+robustly significant horizon is 15&nbsp;min, where the linear ridge (IC&nbsp;+0.038) leads reversal (+0.035), the
+cross-sectional JEPA (+0.027), and the per-symbol ablation (+0.021). Critically the <span class="key">cross-sectional
+JEPA beats its per-symbol ablation at every horizon</span> &mdash; relative-value structure is real and the model
+learns it [<a href="#r13">13</a>] &mdash; but it is the same near-linear reversal a ridge already captures, and beyond 15&nbsp;min every
+signal is insignificant and sign-flips across months. Cross-sectional context helps the representation, not the
+bottom line.</p>
+
+<h4>4.9.2 Latent world-model &amp; cost-aware planning</h4>
+<p>Inspired by action-conditioned video world-models [<a href="#r8">8</a>,&nbsp;<a href="#r12">12</a>], we learn a latent dynamics model \(g:z_t\!\to\!z_{t+1}\) on a
+frozen encoder and plan positions by receding-horizon control over the decoded return path. The dynamics model is
+genuinely accurate (latent MSE 0.077 vs 0.525 for the identity baseline), yet <span class="key">its multi-step
+return forecasts trail both the direct probe and the linear baseline at every horizon</span> &mdash; the
+return-relevant signal is the small unpredictable part, washed out by an \(\ell_2\)-accurate rollout. Cost-aware
+planning beats a myopic policy (by trading half as much) but only reaches Sharpe \(\approx 0\), and buy-and-hold
+beats both: the planner&rsquo;s best move is to <em>barely trade</em>. (For a price-taker the action-conditioned
+world-model degenerates; the genuine version needs market-by-order fill data we exclude.)</p>
+
+<h4>4.9.3 Predictive uncertainty &amp; volatility regime</h4>
+<p>Because a smooth-\(\ell_1\) point predictor collapses to the conditional mean, we test whether the JEPA&rsquo;s
+own latent prediction-error (&ldquo;energy&rdquo;) is a useful <em>non-directional</em> signal. It is real but weak:
+energy predicts forward realized volatility with IC&nbsp;+0.03&ndash;+0.06, rising with horizon &mdash; yet trailing
+realized volatility predicts it far better (+0.33&ndash;+0.79), and a combined model collapses onto the trailing-vol
+term. Confidence-gating the directional strategy (trade only low-energy windows) does not rescue it from the spread.
+The non-directional channel is more predictable than direction &mdash; just not beyond a trivial volatility-clustering
+baseline.</p>
+
+<h4>4.9.4 Bulletproofing the negative</h4>
+<p>Two checks foreclose the standard rebuttals. <span class="key">RankMe</span> [<a href="#r11">11</a>] effective rank is high for every
+encoder (65&ndash;88 of 128&ndash;192 dimensions) &mdash; the negative is not an artifact of a collapsed
+representation. And a <span class="key">PITS</span> baseline [<a href="#r9">9</a>] (a 59k-parameter, attention-free
+patch autoencoder that drops the JEPA masked-context mechanism entirely) lands in the same weak band as the JEPA and
+the linear model &mdash; so the masked-context machinery itself adds nothing here, upgrading the claim to &ldquo;the
+latent-prediction <em>mechanism</em> carries no extra signal on near-Markovian price data.&rdquo;</p>
+
+<h3>4.10 Summary of arms</h3>
 <table>
   <thead><tr><th>Arm</th><th>Signal?</th><th>Beats linear?</th><th>Tradeable net of cost?</th></tr></thead>
   <tbody>
@@ -278,6 +339,9 @@ universe.</p>
     <tr><td>News sentiment (daily)</td><td><span class="key">weak, contrarian, persistent</span></td><td>best non-price</td><td class="neg">no &mdash; Sharpe ~0.16</td></tr>
     <tr><td>Price + sentiment fusion</td><td>&mdash;</td><td>fusion <em>hurts</em></td><td class="neg">no</td></tr>
     <tr><td>Crypto funding carry</td><td>~none</td><td>&mdash;</td><td class="neg">no &mdash; fade loses to momentum</td></tr>
+    <tr><td>Cross-sectional Graph-JEPA</td><td><span class="key">real (beats per-symbol)</span></td><td>no &mdash; &le; linear reversal</td><td class="neg">no &mdash; insignificant beyond 15&nbsp;min</td></tr>
+    <tr><td>Latent world-model + planning</td><td>accurate dynamics</td><td>no &mdash; rollout &lt; direct &lt; linear</td><td class="neg">no &mdash; loses to buy-hold</td></tr>
+    <tr><td>Latent energy (vol / regime)</td><td>weak, non-directional</td><td>no &mdash; &le; trailing vol</td><td class="neg">no &mdash; gating doesn't help</td></tr>
   </tbody>
 </table>
 
@@ -297,6 +361,14 @@ the one place a real edge might live with more data. Two methodological lessons 
 pooling beat mean-pooling by 5&times; because the alpha lives in the most recent state; and
 (ii) <span class="key">single-period backtests are systematically optimistic</span> &mdash; every promising
 single-window result here collapsed under walk-forward.</p>
+<p>Round&nbsp;2 sharpens rather than overturns this. The three architectural escapes most likely, a&nbsp;priori, to
+beat the near-Markovian ceiling each reproduced it &mdash; and instructively, each <em>did</em> learn something real:
+a cross-sectional set-Transformer beats a per-symbol encoder (relative value is genuine structure), a latent dynamics
+model rolls forward accurately, and latent prediction-error tracks volatility. That these genuine capabilities still
+fail to beat a ridge, trailing volatility, or buy-and-hold is the cleanest statement of the thesis: <span class="key">the
+ceiling is the information, not the model</span>. The effective-rank and attention-free-baseline controls close the
+last escape hatch &mdash; the representations are high-rank, and a 59k-parameter patch autoencoder matches the full
+JEPA, so neither collapse nor the masked-prediction mechanism explains the result.</p>
 
 <h2 id="limitations">6. Limitations &amp; future work</h2>
 <p>The freely-available data is short (six weeks of LOB; five months of news) and U.S.-equity / mid-cap-crypto
@@ -316,6 +388,12 @@ We release all code and a complete dated research log to support replication and
   <li id="r5">Z. Zhang, S. Zohren, S. Roberts. <em>DeepLOB: Deep Convolutional Neural Networks for Limit Order Books.</em> IEEE TSP 2019.</li>
   <li id="r6">A. Ntakaris et&nbsp;al. <em>Benchmark Dataset for Mid-Price Forecasting of Limit Order Book Data (FI-2010).</em> J. Forecasting 2018.</li>
   <li id="r7">A. Bardes, J. Ponce, Y. LeCun. <em>VICReg: Variance-Invariance-Covariance Regularization for SSL.</em> ICLR 2022.</li>
+  <li id="r8">M. Assran et&nbsp;al. <em>V-JEPA 2: Self-Supervised Video Models Enable Understanding, Prediction and Planning.</em> 2025. arXiv:2506.09985.</li>
+  <li id="r9">S. Lee, T. Park, K. Lee. <em>Learning to Embed Time Series Patches Independently (PITS).</em> ICLR 2024. arXiv:2312.16427.</li>
+  <li id="r10">G. Skenderi et&nbsp;al. <em>Graph-JEPA: Graph-level Representation Learning with Joint-Embedding Predictive Architectures.</em> 2023. arXiv:2309.16014.</li>
+  <li id="r11">Q. Garrido et&nbsp;al. <em>RankMe: Assessing the Downstream Performance of Pretrained Representations by their Rank.</em> ICML 2023. arXiv:2210.02885.</li>
+  <li id="r12">A. Bagatella et&nbsp;al. <em>TD-JEPA: Latent-predictive Representations for Zero-Shot Reinforcement Learning.</em> 2025. arXiv:2510.00739.</li>
+  <li id="r13">D. Lee et&nbsp;al. <em>FASCL: Cross-Sectional Asset Retrieval via Future-Aligned Soft Contrastive Learning.</em> 2026. arXiv:2602.10711.</li>
 </ol>
 
 <footer>

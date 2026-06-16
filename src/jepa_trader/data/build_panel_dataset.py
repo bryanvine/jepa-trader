@@ -136,7 +136,8 @@ def build(cfg: dict) -> dict:
     np.save(os.path.join(out_dir, "Yp.npy"), Yp)
     np.save(os.path.join(out_dir, "valid.npy"), valid)
     np.save(os.path.join(out_dir, "close.npy"), CL)
-    np.save(os.path.join(out_dir, "times.npy"), master.asi8.astype(np.int64))
+    np.save(os.path.join(out_dir, "times.npy"),
+            master.values.astype("datetime64[ns]").astype(np.int64))   # canonical nanoseconds
     np.save(os.path.join(out_dir, "split.npy"), split)
     json.dump(syms, open(os.path.join(out_dir, "symbols.json"), "w"))
     json.dump({"feature_names": FEATURE_NAMES, "median": median.tolist(),

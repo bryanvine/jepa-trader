@@ -53,7 +53,7 @@ def load_model(ckpt_path, device="cuda"):
 def extract(model, data_dir, split, window, horizons, device="cuda", batch=256, xs_norm=False):
     ds = PanelDataset(data_dir, split, window, stride=1, label_horizons=horizons, xs_norm=xs_norm)
     dl = DataLoader(ds, batch_size=batch, shuffle=False, num_workers=6)
-    EX, ET, RW, Y, YM, CL, VL = [], [], [], [], [], [], []
+    EX, ET, RW, Y, YM, CL, VL, TI = [], [], [], [], [], [], [], []
     for b in dl:
         x = b["x"].to(device, non_blocking=True)
         sv = b["sym_valid"].to(device, non_blocking=True)
@@ -64,9 +64,12 @@ def extract(model, data_dir, split, window, horizons, device="cuda", batch=256, 
         RW.append(b["x"][:, :, -1, :].numpy())          # anchor-bar features (N,F)
         Y.append(b["y"].numpy()); YM.append(b["y_mask"].numpy())
         CL.append(b["close"].numpy()); VL.append(b["sym_valid"].numpy())
+        TI.append(b["t_idx"].numpy())
+    times = np.load(os.path.join(data_dir, "times.npy"))[np.concatenate(TI)]
     return dict(emb_xs=np.concatenate(EX), emb_tmp=np.concatenate(ET), raw=np.concatenate(RW),
                 y=np.concatenate(Y), ymask=np.concatenate(YM), close=np.concatenate(CL),
-                valid=np.concatenate(VL).astype(bool), feat_names=ds.meta["feature_names"])
+                valid=np.concatenate(VL).astype(bool), feat_names=ds.meta["feature_names"],
+                times=times)
 
 
 # ---------------- cross-sectional rank-IC ----------------

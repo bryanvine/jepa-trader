@@ -33,13 +33,15 @@ def main():
             splits=dict(train_end="2026-01-31", val_end="2026-02-28"),
             out_dir=str(ROOT / "data/panel_dense82"),
         )
-    else:  # wide universe, pre-collapse window only
+    else:  # wide SURVIVORSHIP-FREE universe (~448 names incl. those that die in the
+           # March-2026 collapse), pre-collapse window only. Pretrain on Jun-Oct;
+           # walk-forward test folds Dec/Jan/Feb live in the 'test' span.
         cfg = dict(
             bars_csv=str(ROOT / "data/raw_bars/bars_15m.csv"), bar_minutes=15,
             symbols=None, grid="union", window=64, horizons=HORIZONS,
             assumed_spread_bps=2.0, norm_clip=10.0,
             min_date="2025-06-01", max_date="2026-02-28",
-            splits=dict(train_end="2025-12-15", val_end="2026-01-15"),
+            splits=dict(train_end="2025-10-31", val_end="2025-11-30"),
             out_dir=str(ROOT / "data/panel_all"),
         )
 
