@@ -1,0 +1,15 @@
+# Walk-forward ENCODER pretraining window: Jun-Sep 2025 only (earliest).
+# Its norm_stats become the shared normalization for every WF fold.
+bars_csv: /apps/jepa-trader/data/raw_bars/bars_15m.csv
+bar_minutes: 15
+window: 64
+horizons: [1, 2, 4, 8, 16, 32, 64]
+min_segment_rows: 96
+assumed_spread_bps: 2.0
+min_date: "2025-06-01"
+max_date: "2025-10-15"           # Jun-Sep train + a little Oct for val
+splits:
+  train_end: "2025-09-30"        # encoder pretrains on Jun-Sep
+  val_end:   "2025-10-10"
+norm_clip: 10.0
+out_dir: /apps/jepa-trader/data/bars_15m_junsep

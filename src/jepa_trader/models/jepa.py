@@ -91,6 +91,16 @@ class JEPA(nn.Module):
         return loss, metrics
 
     @torch.no_grad()
+    def energy(self, x: torch.Tensor, ctx_idx: torch.Tensor, tgt_idx: torch.Tensor) -> torch.Tensor:
+        """Per-window latent prediction error (B,) under a given mask — the model's
+        'surprise' about the masked/future patches. Non-directional regime signal (A3)."""
+        t_all = self.target_encoder(x, idx=None)
+        tgt = F.layer_norm(t_all[:, tgt_idx, :], (t_all.shape[-1],))
+        ctx = self.context_encoder(x, idx=ctx_idx)
+        pred = self.predictor(ctx, ctx_idx, tgt_idx)
+        return F.smooth_l1_loss(pred, tgt, reduction="none").mean(dim=(1, 2))
+
+    @torch.no_grad()
     def represent(self, x: torch.Tensor, pool: str = "mean") -> torch.Tensor:
         """Encode a full window with the CONTEXT encoder for downstream probing.
         Returns a pooled representation (B, D)."""

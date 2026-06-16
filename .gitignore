@@ -4,9 +4,10 @@ __pycache__/
 *.pyc
 .ipynb_checkpoints/
 
-# Data & artifacts (large; reproducible from source)
-data/
-experiments/
+# Data & artifacts (large; reproducible from source). Anchored to repo root so the
+# source package src/jepa_trader/data/ is NOT ignored.
+/data/
+/experiments/
 *.npz
 *.npy
 *.parquet

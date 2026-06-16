@@ -1,0 +1,21 @@
+# Core dataset: SPY + QQQ, 10-level LOB, Nov-Dec 2025, regular trading hours.
+# Horizons are in 100ms snapshots: 1->0.1s, 5->0.5s, 10->1s, 30->3s, 60->6s,
+# 100->10s, 300->30s, 600->60s.
+parquet_glob: /apps/trading-system/data/training/lob_*.parquet
+symbols: [SPY, QQQ]
+session: rth                 # 'rth' (14:30-21:00 UTC) or 'all'
+grid_ms: 100                 # resample each segment to a uniform 100ms grid (last per bucket)
+n_feat_levels: 5
+horizons: [1, 5, 10, 30, 60, 100, 300, 600]
+min_segment_rows: 1000
+max_segment_rows: 300000     # ~234k is the 6.5h RTH max at 10Hz; reject anomalies above
+exclude_dates: ["2025-12-08", "2025-12-09"]   # flagged data-quality issues upstream
+
+# Data spans Nov 10 - Dec 19 2025 (gap Dec 6-10: weekend + excluded). Split by date:
+splits:
+  train_end: "2025-12-02"    # train: Nov 10 .. Dec 2  (~16 days)
+  val_end:   "2025-12-05"    # val:   Dec 3 .. Dec 5    (3 days)
+  # test: Dec 11 .. Dec 19   (7 days, after the natural Dec 6-10 gap)
+
+norm_clip: 10.0
+out_dir: /apps/jepa-trader/data/spy_qqq_lob

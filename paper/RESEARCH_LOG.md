@@ -481,3 +481,254 @@ L3 market-making (queue/fill), longer sentiment history, options/IV, futures MBO
 - Nie et al. (2023), *A Time Series is Worth 64 Words* (PatchTST).
 - Zhang et al. (2019), *DeepLOB: Deep Convolutional Neural Networks for LOB*.
 - Bardes et al. (2022), *VICReg*.
+
+**Round-2 additions (literature scout, 2026-06-16):**
+- Assran et al. (2025), *V-JEPA 2* — action-conditioned latent world model, zero-shot
+  planning via CEM/MPC (arXiv 2506.09985).
+- Bagatella et al. (2025), *TD-JEPA: Latent-predictive Representations for Zero-Shot RL*
+  (arXiv 2510.00739).
+- Skenderi et al. (2023/25), *Graph-JEPA* (arXiv 2309.16014).
+- Ennadir et al. (2024), *Joint Embeddings Go Temporal* (TS-JEPA; arXiv 2509.25449) —
+  beaten by its own AR baseline on short-horizon forecasting; wins are in classification.
+- Lee et al. (2024), *Learning to Embed Time-Series Patches Independently* (PITS; ICLR 2024,
+  arXiv 2312.16427) — removing the masked-context-prediction mechanism *improves* TS forecasting.
+- Thimonier et al. (2024), *T-JEPA: SSL for Tabular Data* (arXiv 2410.05016) — latent-SSL
+  beats GBDT on static tabular (one of the few credible "SSL > strong baseline" results).
+- Drozdov, Shwartz-Ziv, LeCun (2024), *Video Representation Learning with JEPAs* — latent
+  variables z for multi-modal futures (arXiv 2412.10925).
+- Balestriero & LeCun (2025), *LeJEPA* (arXiv 2511.08544) — SIGReg; drops EMA/stop-grad.
+- Zhong et al. (2025), *LOBench* (arXiv 2505.02139) — first LOB representation benchmark;
+  no linear baseline, no PnL; pretrain→probe ≈ end-to-end.
+- Lee et al. (2026), *FASCL: Cross-Sectional Asset Retrieval via Future-Aligned Soft
+  Contrastive Learning* (arXiv 2602.10711) — *supervised* evidence that cross-sectional
+  future-return-correlation structure is the learnable signal.
+- Garrido et al. (2023), *RankMe* (arXiv 2210.02885); Bardes et al. (2021), *VICReg*
+  (2105.04906) — effective-rank diagnostic + variance/covariance anti-collapse.
+- Méthod refs: Bailey & López de Prado, *Deflated Sharpe Ratio* (SSRN 2460551) &
+  *Probability of Backtest Overfitting / CSCV* (SSRN 2326253); Harvey-Liu-Zhu (2016),
+  *…and the Cross-Section of Expected Returns* (t>3 hurdle); McLean & Pontiff (2016).
+
+---
+
+## 9. Round 2 — literature-grounded next directions (2026-06-16)
+
+After the Phase-1 study returned a clean negative (§7.13), we ran a five-way literature
+scout (core JEPA + theory/recipe; time-series/forecasting JEPA; other-modality/architectural
+JEPA; an SSL-for-finance reality check; and a data inventory). This section records what we
+learned and the Round-2 plan. **Working title for the follow-up: "Changing the question."**
+
+### 9.0 Meta-finding — our negative result is the consensus, not an outlier
+- **No JEPA / latent-prediction method has been shown to beat strong baselines at
+  *forecasting*.** The one on-point paper (TS-JEPA, 2509.25449) is beaten by its own
+  autoregressive variant at short horizons and never benchmarks PatchTST/DLinear; **PITS**
+  (2312.16427) shows that *removing* the JEPA masked-context mechanism *improves* TS
+  forecasting; TS foundation models' edge collapses to ~0–14 % on non-leaked data.
+  **LOBench** (2505.02139), the first dedicated LOB representation benchmark, includes
+  neither a linear baseline nor PnL, and finds pretrain→probe ≈ end-to-end.
+- **Where latent-SSL *does* win:** static tabular (T-JEPA > XGBoost), classification,
+  anomaly/early-warning, and **cross-sectional structure** — tasks with cross-sectional or
+  discrete structure, not low-SNR sequential extrapolation.
+- **Consequence that prioritizes everything below.** Our diagnosis (§7.9: 6× scaling changed
+  nothing ⇒ the ceiling is the *signal*, not capacity) means **every idea that only improves
+  the encoder will reproduce the negative.** The only experiments that can *change* the
+  verdict are those that **change what we predict or optimize** — toward where SSL is shown
+  to pay (cross-sectional, discrete/regime, uncertainty, and planning rather than point
+  forecasting).
+
+### 9.1 Universe expansion — the reality (resolves "we never expanded tickers")
+- **The LOB parquet is not a panel.** The "142 symbols" is a *union*: SPY+QQQ for 21
+  sessions; a single dense 5-session block (Dec 11–17, 83 names on all five); ramp-down
+  partial days. There is no multi-week multi-name LOB cross-section.
+- **Off SPY/QQQ the HFT cost wall *rises* 4–350×** (median half-spread: SPY ~0.07 bps →
+  NVDA/AAPL/MSFT 0.3–0.8 → SOFI/PFE/RIVN ~2 → NIO/YPF/AMC 10–26 bps). Expanding the
+  HFT cross-section makes net-of-cost *harder*. ⇒ Use the Dec-11–17 multi-name block only
+  as a **transfer/generalization probe** (pretrain SPY/QQQ → probe the block + the Mar–Jun
+  2026 out-of-time `lob_snapshots`), never as a strategy universe.
+- **The real cross-section lives in the bars arm.** `data/raw_bars/bars_15m.csv` already
+  spans **2025-06-12 → 2026-06-04** (449 symbols). A clean, gap-free **dense-82** universe
+  (present every full month; includes SPY) gives an aligned panel of **6025 timestamps ×
+  82 symbols × 25 features** (≈1 yr of 15-min RTH, incl. the 2026 out-of-time tail). The
+  wider **~448** universe is usable for Jun 2025–Feb 2026 (cross-sectional power) before the
+  March universe collapse. Crypto bars (82 names, fresh, 24/7) are the regime-diversity arm.
+- **Caveat to log:** the dense-82 are *survivorship-selected* (the names that survived the
+  March cutover); treat absolute performance cautiously and lean on relative/rank results.
+
+### 9.2 The three Round-2 arms (user-selected: do A1→A2→A4)
+- **A1 — Cross-sectional Graph-JEPA (primary; *is* the universe expansion).** Phase-1
+  modeled every symbol independently — a structural blind spot. A1 models the universe as a
+  graph: a per-symbol temporal encoder produces one token per symbol at each anchor time;
+  a cross-sectional Transformer attends across the universe; the JEPA objective **masks a
+  random subset of symbols at time t and predicts their target-encoder latents from the rest**
+  (Graph-JEPA 2309.16014). Evaluation is **cross-sectional rank-IC** (per-timestamp Spearman
+  across names, + IC information-ratio) and a **dollar-neutral long-short** top/bottom-decile
+  backtest, net of cost, walk-forward, with **deflated Sharpe + PBO**. Baselines: per-symbol
+  JEPA (does cross-sectional context add?), raw cross-sectional ridge, classic factors
+  (momentum/short-term-reversal), and a **FASCL-style supervised upper bound** (2602.10711).
+  *Honest prior:* cross-sectional equity factors are the framing with the best net-of-cost
+  evidence, but ML tends to add nonlinear interactions, not new signal, and decays
+  post-publication — expect weak-but-maybe-real, and report it rigorously.
+- **A2/A3 — Uncertainty & regime axis (cheap; reuses per-symbol JEPA).** A smooth-L1 point
+  predictor collapses to the conditional mean ≈ "no signal," which is exactly our Phase-1
+  symptom. **A2:** a stochastic/variational predictor (mean+variance or latent-variable z;
+  2412.10925) whose predictive variance drives **position sizing / trade-gating** — moving
+  the evaluation off mean-prediction. **A3:** use the JEPA **latent prediction-error/energy**
+  as a non-directional **volatility/regime** signal (vol is predictable where signed returns
+  are capped). Cheap, and targets what's actually forecastable.
+- **A4 — JEPA world-model + latent policy (boldest; big-compute; scope after A1/A2).**
+  Action-conditioned latent dynamics + latent planning (CEM/MPC) or a TD-policy (TD-JEPA
+  2510.00739; V-JEPA 2-AC 2506.09985) that **optimizes net-of-cost PnL/Sharpe directly in
+  latent space**, folding transaction cost into the objective. The frozen linear probe is the
+  *wrong test* for a world model; this asks the question Phase-1 never asked. **No
+  JEPA-as-trading-policy exists in the literature** (novel). High variance — offline RL on
+  non-stationary, low-SNR markets is fragile.
+
+### 9.3 Tier-B — bulletproof the Phase-1 negative (parallel, cheap)
+VICReg variance+covariance as an *added loss* (not merely monitored) + **RankMe** effective-
+rank logging on every run (forecloses "the representation was silently collapsed/
+underpowered"); a **PITS** non-JEPA SSL baseline (if it matches ridge with fewer params, our
+claim strengthens to "the JEPA *mechanism* carries no signal on near-Markovian price data");
+and **end-to-end fine-tuning** to complete "JEPA ≈ supervised" across both eval regimes.
+
+### 9.4 Rigor protocol (binding for all Round-2 economic claims)
+Triggered because expanding to 82–448 names × architectures × horizons creates thousands of
+implicit trials. (1) **Deflate every Sharpe** for the number of configurations tried (DSR);
+report **PBO via CSCV** for any headline strategy; apply the **t > 3** hurdle, not t > 2.
+(2) **Evaluate at executable prices** — cross the half-spread + fees + a slippage term; never
+mid-price. (3) **Embargo/purge** around walk-forward split boundaries (overlapping windows
+and label horizons leak). (4) **Point-in-time universe** for the ~448 set; flag the dense-82
+survivorship bias explicitly. (5) Keep the **linear/ridge baseline** with identical features,
+tuning budget, and cost treatment as the JEPA — no strawman controls.
+
+### 9.5 A1 results — cross-sectional Graph-JEPA (dense-82 panel)
+**Setup.** Aligned panel `data/panel_dense82` (T=5977 × N=82 × F=25, 15-min, intersection
+grid; test = Mar–Jun 2026, 1404 timestamps). Model `XSJEPA` (`models/xsjepa.py`): per-symbol
+PatchTST **temporal tower** → permutation-equivariant **set-Transformer** across the universe;
+JEPA masks a random 40 % of symbols and predicts their EMA-target set-context latents from the
+visible cross-section (1.65 M params, no collapse, tgt_std≈0.95). Eval: **cross-sectional
+rank-IC** (per-timestamp Spearman across names; **non-overlapping t-stat** — sub-sample every h
+so horizon-h labels don't overlap) + dollar-neutral top/bottom-decile long-short, net of
+1.5 bps/side turnover cost, with deflated Sharpe.
+
+**Cross-sectional normalization is what unlocks the cross-section.** With *global* feature
+normalization (v1) the set encoder underperforms its own per-symbol ablation. With
+**cross-sectional z-scoring** of features per timestamp (relative value; also auto-removes
+common/market features) the JEPA improves markedly and **beats the per-symbol ablation** —
+the set encoder genuinely exploits relative-value structure:
+
+| rank-IC (mean / non-overlap t), TEST | h1 (15m) | h2 (30m) | h4 (1h) | h8 (2h) |
+|---|---|---|---|---|
+| xsjepa (cross-sectional, **xs-norm**) | +0.021 / **+4.9** | +0.016 / **+4.2** | +0.014 / +1.2 | +0.023 / +0.9 |
+| temporal (per-symbol ablation, xs-norm) | +0.018 / +4.2 | +0.014 / +3.9 | +0.009 / +1.6 | +0.010 / +1.0 |
+| xsjepa (global-norm v1) | +0.014 / +3.0 | +0.003 / +1.5 | −0.003 / +0.3 | −0.013 / −0.6 |
+| **raw_xs (linear ridge)** | **+0.030 / +6.4** | +0.016 / +4.1 | +0.001 / +1.2 | +0.015 / +1.4 |
+| rev (short-term reversal) | +0.026 / +5.1 | +0.023 / +4.8 | +0.016 / +2.1 | +0.008 / +0.1 |
+
+**Reading (honest).** (1) Only **h1–h2 (15–30 min)** survive non-overlapping t-stats; every
+multi-hour cell collapses to t<1.6 once label overlap is removed. (2) At those robust horizons
+the **linear ridge still wins** (+0.030 vs xsjepa +0.021), and the robust cross-sectional signal
+is short-horizon **reversal** — which `raw_xs` already contains. (3) The eye-catching long-short
+Sharpes (headline **DSR 0.76–0.95 @ h64**) are the **Phase-1 +102 bps trap caught prospectively**:
+h64 = **22 non-overlapping rebalances** on a **survivorship-selected** universe. The rigor
+protocol (§9.4) flagged the false positive before it was claimed.
+
+**Verdict.** Cross-sectional structure is real and the Graph-JEPA learns it (xsjepa > per-symbol
+once relative-value-normalized — a genuine, novel positive for the *representation*), **but it
+is linear structure (reversal) the ridge captures at least as well; JEPA ≤ linear, no robust
+net-of-cost edge.** The thesis extends to the cross-sectional arm. Open rigor: walk-forward
+folds + a point-in-time (survivorship-free) universe. Figure: `paper/figures/round2_xs_energy.png`.
+
+### 9.6 A2/A3 results — uncertainty & regime (latent energy)
+**Setup.** Frozen Phase-1 LOB headline model (`jepa_block_v3`) on SPY+QQQ test; **energy** =
+causal-mask latent prediction error per window (predict the future half in latent space); 116 k
+anchors; targets strictly forward (`scripts/53_energy_regime.py`).
+
+**A3 — does energy predict forward volatility?** Yes, weakly and *positively* (and distinct
+from direction) — but a trivial baseline dominates and **subsumes it entirely**:
+
+| Spearman IC vs forward realized vol | 0.1 s | 1 s | 3 s | 10 s |
+|---|---|---|---|---|
+| JEPA energy | +0.032 | +0.058 | +0.061 | +0.060 |
+| **trailing realized vol** | **+0.332** | **+0.612** | **+0.724** | **+0.793** |
+| combined(energy, trailing vol) | +0.332 | +0.612 | +0.724 | +0.792 |
+
+`combined ≈ trailing-vol` to three decimals ⇒ energy adds **nothing** over trailing vol
+(energy↔trailing-vol IC is only +0.07, yet fully redundant). Energy is a real but weak vol
+proxy that volatility-clustering already captures.
+
+**A2 — does confidence-gating help direction?** No. Directional (imbalance_1) net is
+**−0.41 bps/trade everywhere** (spread-dominated, as in §7.3), and trading only **low-energy
+("confident") windows is no better** (low-E −0.44 vs high-E −0.38; hit-rates identical ~0.31/
+0.46/0.48 at 0.1 s/1 s/3 s). Uncertainty-gating does not rescue the cost wall.
+
+**Verdict.** The non-directional (volatility) channel *is* more predictable than direction —
+confirming the premise — but the JEPA's latent energy is **dominated by a trivial classical
+baseline (trailing vol)**, and uncertainty-gating doesn't help. JEPA ≤ trivial baseline again.
+
+### 9.7 A4 results — JEPA latent world-model + cost-aware planning
+**Setup** (`scripts/55_world_model.py`). Frozen `jepa_bars_v1` encoder on bars_15m → latents
+z_t. A residual-MLP **latent dynamics model** g: z_t→z_{t+1} (trained on 1.56 M within-segment
+pairs) reaches **MSE 0.077 vs 0.525 for the identity baseline** — it learns *genuine* latent
+dynamics. A ridge head decodes z→1-step return; we roll g forward K=16 steps and decode a return
+path, then run a receding-horizon **MPC** policy (DP over positions, 1.5 bps per unit |Δposition|)
+vs a myopic threshold and buy-hold. For a price-*taker* the world model is action-independent, so
+this isolates (P) whether latent rollout adds predictive value and (E) whether planning adds
+economic value.
+
+**(P) Predictive — the world-model rollout is *worse* than direct prediction:**
+
+| Spearman IC, TEST | h1 (15m) | h4 (1h) | h8 (2h) | h16 (4h) |
+|---|---|---|---|---|
+| latent rollout (world model) | −0.003 | +0.009 | +0.015 | +0.020 |
+| direct probe z→r_h | +0.018 | +0.014 | +0.026 | +0.035 |
+| linear (raw features) | +0.021 | +0.011 | +0.021 | +0.036 |
+
+Despite accurate latent dynamics, **rollout return-forecasts trail both the direct probe and the
+linear baseline at every horizon** — the classic *"predict the latent well in L2, lose the
+return signal"* failure: the return-relevant component is the small unpredictable part, washed
+out by an MSE-accurate rollout.
+
+**(E) Economic — planning beats myopic but reaches only ≈0; buy-hold wins:**
+
+| policy | net bps/bar | ann Sharpe | turnover | active |
+|---|---|---|---|---|
+| MPC (cost-aware planning) | +0.031 | **+0.05** | 0.19 | 1.00 |
+| myopic threshold | −0.332 | −0.79 | 0.38 | 0.40 |
+| buy-hold | +0.299 | **+0.51** | 0.00 | 1.00 |
+
+Cost-aware planning **does** beat the myopic policy — by trading ~half as much and avoiding its
+losses — but only reaches a ~zero Sharpe, and **buy-hold beats both**. The planner's main effect
+is correctly learning to *barely trade*; it cannot manufacture alpha from an uninformative path.
+
+**Verdict.** Accurate latent dynamics **≠** informative return rollout; latent planning can't
+create edge that isn't in the forecast. *Caveat:* a price-taker's action-conditioned world model
+degenerates (our trades don't move the market in this data); the genuine V-JEPA-2-AC framing
+needs market-impact / fill (L3 MBO) data we deliberately excluded — documented future work.
+
+### 9.8 Round-2 synthesis
+We tested the three ideas the literature scout flagged as most likely to *change the question*
+away from Phase 1's near-Markovian dead end. Each confirms the thesis — while, notably, the JEPA
+**does** capture genuinely real structure in every case; it just never beats the right simple baseline:
+
+| arm | new idea | JEPA captures real structure? | beats simple baseline? | tradeable net of cost? |
+|---|---|---|---|---|
+| **A1** cross-sectional Graph-JEPA | universe-as-graph, relative value | **yes** — xsjepa > per-symbol (with xs-norm) | no — ≤ linear (reversal) | no — overlap/survivorship artifacts |
+| **A2/A3** energy / uncertainty | non-directional vol + confidence gating | **yes** — energy↔fwd-vol (weak +) | no — ≤ trailing vol | no — gating doesn't help direction |
+| **A4** world-model + planning | latent dynamics + MPC | **yes** — dynamics MSE ≪ identity | no — rollout < direct < linear; MPC < buy-hold | no — planning → ~0 Sharpe |
+
+**Round-2 thesis.** Even the three escapes chosen specifically to beat Phase 1 reproduce it:
+JEPA representations are valid and *sometimes capture real, novel structure* — cross-sectional
+relative value, forward volatility, accurate latent dynamics — **but never beat the appropriate
+simple baseline** (linear ridge / trailing vol / buy-hold), and **no robust net-of-cost alpha**
+emerges. The binding constraints remain **signal-linearity, transaction costs, and market
+efficiency — not model architecture.** The §9.4 rigor protocol earned its keep by catching the
+A1 h64 false positive (22 rebalances + survivorship) *prospectively* — the Phase-1 +102 bps
+lesson applied before the claim.
+
+**Genuine contributions for the paper.** (1) First **cross-sectional / Graph-JEPA for equities**,
+with the finding that relative-value normalization is what unlocks cross-sectional representation
+learning (xsjepa > per-symbol) — yet it remains ≤ linear. (2) **JEPA latent energy as a
+volatility/regime signal** — real but dominated by trailing vol. (3) First **JEPA latent
+world-model + planning for trading**, with the clean negative that *accurate latent dynamics do
+not imply informative return rollouts*, plus the price-taker degeneracy of action-conditioned
+world models. **Untested levers remain the same paid-data / new-framing ones** (§7.13): L3/MBO
+market-making (queue/fill), survivorship-free point-in-time universes, longer histories.
