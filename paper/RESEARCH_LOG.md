@@ -404,6 +404,30 @@ infra now live: 5060 + 4080 Super over SSH; uv-managed remote env, rsync deploy.
 
 ---
 
+### 7.10 Multi-modal arm — does news sentiment predict returns? (premise check)
+Tested against the trading DB news feed (**346k articles, 197 symbols, Jan–Jun 2026,
+100% LLM-sentiment-scored**, with event taxonomy earnings/guidance/analyst/macro).
+Leak-safe daily panel (`scripts/07_sentiment_baseline.py`): aggregate sentiment per
+(symbol, day) → align each news day to the FIRST trading day strictly after it → label =
+close-to-close forward return. **News sentiment is a *contrarian* predictor — IC is
+negative every month Jan–Jun** (directionally persistent), strongest as the
+symbol-demeaned *sentiment surprise* `s_surp`.
+
+⚠️ **But month-by-month is essential** (lesson from the bars +102 bps): a single test
+month showed `s_surp`@2–3 d IC ≈ **−0.13**, yet **pooled across 6 months it is only
+≈ −0.04** — the strong months were small-sample (Mar–Apr, ~130 rows) or a specific
+regime (May–Jun). Honest read: a **weak but directionally-persistent** contrarian signal
+(pooled |IC| ≈ 0.04 @2–3 d).
+
+**Why it still matters:** this is the **first non-price signal with a persistent sign** in
+the whole study, and it lives at a **daily horizon where costs (~2–4 bps) are negligible
+vs 300–480 bps moves** — so even a weak edge could be economically real, unlike the
+cost-dominated microstructure. Partially validates the multi-modal premise (information
+> microstructure for *capturable* alpha). **Next:** (1) walk-forward backtest of the
+contrarian sentiment strategy (is it tradeable?); (2) **price + sentiment JEPA fusion**
+(does fusing beat either modality alone?); (3) crypto funding-carry arm. Code + first
+result pushed to `github.com/bryanvine/jepa-trader`.
+
 ## 8. References (to expand)
 - LeCun (2022), *A Path Towards Autonomous Machine Intelligence* (JEPA).
 - Assran et al. (2023), *Self-Supervised Learning from Images with a
