@@ -799,3 +799,99 @@ pooled.
 **Net:** removing survivorship and using walk-forward leaves the conclusion unchanged and stronger —
 the cross-sectional structure is real and the JEPA learns it (xsjepa > per-symbol), but it remains
 **≤ linear with no robust net-of-cost alpha.** This is the rigorous close of the A1 arm.
+
+---
+
+## 10. Paper 3 — beyond price: long-history sentiment & implied volatility (2026-06-16)
+
+Papers 1–2 found no robust net-of-cost edge in *directional* free-data signals. The two
+biggest untested levers (§7.13) were (a) **longer sentiment history** — §7.11's contrarian
+signal rode only ~28 independent periods — and (b) a **new free modality, options/IV**. Paper 3
+acquires both for **$0**: **FNSPID** (Zhang et al. 2024; 13M news headlines, here the Benzinga
+slice 2009–2020) and **Deribit DVOL** (the free crypto implied-vol index, 2021–2026). Two arms:
+**S** (long-history sentiment) and **V** (crypto implied volatility).
+
+### 10.1 Arm V — crypto implied volatility (Deribit DVOL, BTC+ETH, 2021–2026)
+**Data** (`scripts/60_pull_deribit.py`, `61_crypto_vol.py`): Deribit's free public API → the
+**DVOL** 30-day implied-vol index + perpetual price for BTC and ETH, daily, 2021-03 → 2026-06
+(3,822 12h bars/coin), plus a live option-surface snapshot. Vols annualized to %.
+
+**V1 — implied vol predicts forward realized vol, and BEATS the trailing-vol baseline:**
+
+| Spearman IC vs forward 30-day realized vol (pooled BTC+ETH) | IC |
+|---|---|
+| **DVOL (implied vol)** | **+0.671** |
+| trailing realized vol (the trivial baseline) | +0.549 |
+| combined (regression) | +0.667  (β_DVOL **+0.54** ≫ β_trail +0.15) |
+
+This is the **first signal in the entire study to clearly beat the trivial baseline** — implied
+vol carries genuine forward information beyond vol-clustering (as theory says it should).
+
+**V2 — a real, persistent vol-risk-premium.** VRP = DVOL − subsequently-realized vol:
+mean **+7.7 vol-points**, IV > realized **70%** of periods, and **positive every single year**
+(2021 +18 → 2022 +10.7 → 2023 +6.7 → 2024 +6.7 → 2025 +0.6 → 2026 +3.2). Carry-Sharpe of the
+premium: **+1.44 gross, +1.07 at a 2-vol-pt cost, +0.51 at 5-vol-pt.** A genuine, economically
+meaningful free-data premium — the first in the study.
+
+**V3 — directional returns stay efficient.** DVOL level / change / trailing-RV predict forward
+*perp returns* only weakly (|IC| < 0.05), and a fade-DVOL-spike long/short on the perp **loses net
+of cost** (ann-Sharpe −0.9, PSR 0, negative every year). Returns remain unpredictable; only the
+*volatility* dimension is not.
+
+**Verdict.** Arm V is the study's standout: **the volatility dimension is genuinely predictable
+(IV beats the baseline) and carries a persistent risk premium, even though directional returns
+are not.** Honest caveat: harvesting the VRP requires *selling options* (vega spreads, gamma/tail
+risk, margin) which we cannot model on free data — so the rigorous statement is "**a real premium
+exists; whether it is net-harvestable is the open question**," not "free alpha found." It refines
+the thesis: the no-edge result is about *directional, freely-tradeable* signals; the
+*risk-premium / volatility* dimension is a different, more promising story.
+
+### 10.2 Arm S — long-history news sentiment (FNSPID, 2009–2020)
+**Data** (`scripts/62_score_news.py`, `63_sentiment_walkforward.py`): FNSPID's Benzinga
+headline corpus, **FinBERT-scored** (sentiment = P(pos)−P(neg)); 1.65M unique titles → a daily
+**(symbol, date) panel of 1.89M cells, 6,619 symbols, Feb 2009 – Jun 2020 (11.3 years)**. Each
+news date is aligned leak-safe to the **first trading session strictly after** it (FNSPID prices,
+4,031 symbols); labels are forward close-to-close returns. Result: **1.39M aligned observations
+over 2,756 trading days** — vs §7.11's ~28 cohorts.
+
+**The §7.11 "contrarian" bright spot does NOT replicate at scale.**
+
+| cross-sectional rank-IC (sentiment → forward return) | 1d | 3d | 5d |
+|---|---|---|---|
+| sentiment (mean / non-overlap t) | +0.005 / +3.4 | +0.004 / +1.9 | +0.003 / −0.3 |
+
+The IC is **tiny and POSITIVE** (a momentum direction, not §7.11's contrarian negative), and only
+"significant" at 1d because N is enormous. The fade-sentiment long-short (§7.11's proposed trade)
+**loses at every cost level**: gross **−6.6 bps/day** (ann-Sharpe −0.64), worse net (−16.6 @10 bps).
+Per-year it is **sign-unstable** — the momentum direction (buy high-sentiment) was positive
+2009–2017 (driven by 2017, +40 bps/day) then **reversed to negative 2018–2020** — classic
+regime-dependence / alpha decay. **Deflated Sharpe = 0.**
+
+**Verdict.** Well-powered, the daily news-headline sentiment signal is **tiny, sign-unstable, and
+not net-of-cost tradeable in either direction** — §7.11's contrarian edge was a 5-month
+small-sample artifact, exactly the §7.6 "single-period overstates edges" failure applied to the
+project's best prior hope. *Caveat:* this uses a different scorer (FinBERT vs the LLM feed) and
+period (2009–20 vs 2026) than §7.11, so non-replication could be period or methodology — but
+either way, **no robust standalone sentiment edge exists at scale.**
+
+### 10.3 Paper 3 synthesis
+| arm | new free data | beats baseline? | tradeable net of cost? |
+|---|---|---|---|
+| **V** crypto implied vol (Deribit DVOL) | 2021–2026 | **YES** — IV beats trailing-RV (0.67 vs 0.55); VRP +7.7 pts, +ve every year | premium real (carry-Sharpe ~1), but harvesting needs options execution — **open** |
+| **S** long-history sentiment (FNSPID) | 2009–2020 | no — tiny, sign-unstable, momentum-ish | **no** — fade loses; momentum decays/reverses |
+
+**Paper-3 thesis.** Two new free modalities sharpen the three-paper picture into one clean
+sentence: **the *volatility* dimension is genuinely predictable and carries a persistent risk
+premium (Arm V — the study's first baseline-beating, economically-meaningful free signal), while
+the *directional* dimension stays efficient and the prior sentiment bright spot dissolves under a
+well-powered test (Arm S).** Across all three papers: **no robust net-of-cost *directional* alpha
+in free data; the one real edge is a vol-risk-premium — a risk *compensation*, not a forecasting
+alpha — whose net harvestability is the honest open question (needs options-execution / fill
+data).** Figure: `paper/figures/paper3_summary.png`.
+
+**JEPA note (why this stays consistent with Papers 1–2).** Neither arm needs a JEPA to make its
+point: Arm V's signal is a one-feature near-linear relation (IV→realized vol) a ridge captures in
+full, Arm S has essentially no signal to represent, and the daily vol series (3,822 points) is far
+too small for self-supervised pretraining. Consistent with the whole project — JEPA representations
+match but never beat the right simple/classical treatment; here the contribution is the **free-data
+acquisition + rigorous net-of-cost / risk-premium characterization**, not a new architecture.
