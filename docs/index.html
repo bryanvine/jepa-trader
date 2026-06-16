@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Does JEPA Find Alpha? A Feasibility Study of Self-Supervised Representation Learning on Financial Markets</title>
+<meta name="description" content="A rigorous, multi-asset, multi-modal feasibility study of Joint-Embedding Predictive Architectures (JEPA) for financial market prediction: limit-order-book microstructure, lower-frequency bars, news sentiment, and crypto funding carry.">
+<script>
+  MathJax = { tex: { inlineMath: [['$','$']] }, svg: { fontCache: 'global' } };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<style>
+  :root{ --ink:#1a1a1a; --muted:#5b6470; --rule:#e3e6ea; --accent:#1f6feb; --bg:#fdfdfc; --code:#f5f6f8; }
+  *{ box-sizing:border-box; }
+  html{ -webkit-text-size-adjust:100%; }
+  body{ margin:0; background:var(--bg); color:var(--ink);
+        font:17px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif; }
+  .wrap{ max-width:820px; margin:0 auto; padding:48px 22px 96px; }
+  header.title{ border-bottom:3px solid var(--ink); padding-bottom:22px; margin-bottom:8px; }
+  h1{ font-size:30px; line-height:1.25; margin:0 0 14px; letter-spacing:-0.01em; }
+  .byline{ color:var(--muted); font-size:15px; }
+  .byline a{ color:var(--accent); text-decoration:none; }
+  .tag{ display:inline-block; font-size:12px; font-weight:600; letter-spacing:.04em; text-transform:uppercase;
+        color:#fff; background:var(--accent); padding:2px 9px; border-radius:99px; margin-bottom:14px; }
+  h2{ font-size:22px; margin:46px 0 12px; padding-top:8px; letter-spacing:-0.01em; }
+  h3{ font-size:18px; margin:30px 0 8px; color:#222; }
+  p,li{ color:#23262b; }
+  a{ color:var(--accent); }
+  .abstract{ background:#f7f9fb; border:1px solid var(--rule); border-left:4px solid var(--accent);
+             border-radius:8px; padding:18px 22px; margin:26px 0 8px; font-size:16px; }
+  .abstract h3{ margin:0 0 8px; font-size:14px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+  .tldr{ background:#fff8e6; border:1px solid #f2e2af; border-radius:8px; padding:14px 20px; margin:22px 0; }
+  table{ border-collapse:collapse; width:100%; margin:18px 0; font-size:14.5px; }
+  th,td{ border-bottom:1px solid var(--rule); padding:8px 10px; text-align:right; }
+  th:first-child,td:first-child{ text-align:left; }
+  thead th{ border-bottom:2px solid #cfd5dc; font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; }
+  tbody tr:hover{ background:#f7f9fb; }
+  .pos{ color:#137a3e; font-variant-numeric:tabular-nums; }
+  .neg{ color:#b3261e; font-variant-numeric:tabular-nums; }
+  td{ font-variant-numeric:tabular-nums; }
+  figure{ margin:26px 0; text-align:center; }
+  figure img{ max-width:100%; border:1px solid var(--rule); border-radius:8px; background:#fff; }
+  figcaption{ color:var(--muted); font-size:13.5px; margin-top:8px; text-align:left; }
+  code{ background:var(--code); padding:1px 5px; border-radius:4px; font-size:14px;
+        font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace; }
+  .key{ font-weight:600; }
+  blockquote{ margin:18px 0; padding:2px 0 2px 18px; border-left:3px solid var(--accent);
+              color:#2a2e34; font-style:italic; }
+  hr{ border:0; border-top:1px solid var(--rule); margin:40px 0; }
+  ol.refs{ font-size:14.5px; color:#33373d; }
+  ol.refs li{ margin:7px 0; }
+  footer{ margin-top:54px; padding-top:18px; border-top:1px solid var(--rule); color:var(--muted); font-size:13.5px; }
+  .nav{ font-size:13.5px; color:var(--muted); margin:18px 0 0; }
+  .nav a{ margin-right:14px; white-space:nowrap; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="title">
+  <div class="tag">Feasibility Study · Quant Research</div>
+  <h1>Does JEPA Find Alpha?<br>Self-Supervised Joint-Embedding Predictive Architectures on Financial Markets</h1>
+  <p class="byline">
+    <strong>Bryan Vine</strong> · June 2026 ·
+    <a href="https://github.com/bryanvine/jepa-trader">code &amp; full research log ↗</a>
+  </p>
+  <p class="nav">
+    <a href="#abstract">Abstract</a><a href="#intro">1 Introduction</a><a href="#data">2 Data</a><a href="#method">3 Method</a><a href="#results">4 Results</a><a href="#discussion">5 Discussion</a><a href="#limitations">6 Limitations</a><a href="#refs">References</a>
+  </p>
+</header>
+
+<section class="abstract" id="abstract">
+  <h3>Abstract</h3>
+  <p>Joint-Embedding Predictive Architectures (JEPA) learn representations by predicting masked
+  content in <em>latent</em> space rather than reconstructing inputs, a property well-suited to the
+  low signal-to-noise regime of financial markets. We conduct a rigorous, leak-controlled feasibility
+  study of a Time-Series JEPA across four signal families: (i) tick-level limit-order-book (LOB)
+  microstructure (46M snapshots, SPY/QQQ), (ii) lower-frequency OHLCV bars, (iii) LLM-scored news
+  sentiment (346k articles), and (iv) cryptocurrency funding-rate carry. We find that JEPA reliably
+  learns <span class="key">valid label-free representations that match an identical encoder trained
+  end-to-end on labels</span>, yet across <span class="key">frequency, asset class, modality, and a
+  6&times; increase in model scale it never beats a simple linear model</span>, and produces
+  <span class="key">no robust net-of-cost trading edge</span>. The binding constraints are transaction
+  costs and the near-linear, near-Markovian nature of the accessible signal &mdash; not model capacity.
+  The single bright spot, a weak <em>contrarian</em> news-sentiment effect (information diffusion,
+  not microstructure), is directionally persistent but not standalone-tradeable on five months of data.
+  We argue these negative-with-nuance results are themselves the contribution: they cleanly separate
+  &ldquo;the self-supervision works&rdquo; from &ldquo;there is exploitable alpha here.&rdquo;</p>
+</section>
+
+<div class="tldr">
+  <strong>One-line takeaway.</strong> Self-supervised JEPA representations of market data are as good as
+  supervised ones &mdash; and equally unable to beat a 29-feature linear model or the bid&ndash;ask
+  spread. Efficiency, not architecture, is the wall.
+</div>
+
+<h2 id="intro">1. Introduction</h2>
+<p>Generative and forecasting models of markets predict in <em>input space</em> &mdash; the next price
+or return &mdash; where the irreducible noise of a near-efficient market dominates the signal and forces
+the model to expend capacity modelling unpredictable detail. <span class="key">JEPA</span>
+[<a href="#r1">1</a>,&nbsp;<a href="#r2">2</a>,&nbsp;<a href="#r3">3</a>] instead predicts in
+<em>latent</em> space: a context encoder $f_\theta$ and an exponential-moving-average (EMA) target
+encoder $f_\xi$ embed two views of the data, and a predictor $g_\phi$ maps context embeddings to target
+embeddings, with the loss computed entirely between representations. The model is therefore free to
+discard unpredictable nuisance detail &mdash; exactly the property one wants for noisy financial series.</p>
+<p>This study asks a deliberately falsifiable question: <em>do JEPA representations yield better trading
+signals than supervised and classical baselines on real, freely-available market data?</em> We decompose
+it into four hypotheses, tested across asset classes and modalities:</p>
+<ul>
+  <li><span class="key">H1 (representation).</span> A frozen JEPA encoder + linear probe matches or beats
+  a supervised encoder of identical architecture on predictive information coefficient (IC).</li>
+  <li><span class="key">H2 (sample efficiency).</span> JEPA's advantage grows as labels shrink &mdash;
+  the canonical self-supervised selling point.</li>
+  <li><span class="key">H3 (economic).</span> Some horizon yields a positive net-of-cost Sharpe after
+  subtracting the half-spread and fees.</li>
+  <li><span class="key">H4 (modality).</span> Non-price information (news sentiment, funding) supplies
+  alpha orthogonal to price, and fusing modalities beats either alone.</li>
+</ul>
+<p>We report results honestly, including a methodological theme that recurs throughout: <span class="key">single-period
+results dramatically overstate edges</span>, and only walk-forward / multi-period evaluation survives scrutiny.</p>
+
+<h2 id="data">2. Data &amp; leakage control</h2>
+<p>All data is sourced from a live Interactive-Brokers paper-trading stack and a crypto trading system
+(TimescaleDB). We build every dataset ourselves from raw sources for full provenance.</p>
+<ul>
+  <li><span class="key">LOB microstructure.</span> 10-level limit-order-book snapshots for SPY and QQQ,
+  Nov&ndash;Dec 2025, resampled to a uniform 100&nbsp;ms grid (<strong>10.1M rows</strong>, 29 stationary
+  microstructure features: multi-level imbalance, micro-price, book pressure, depth distances, log sizes).</li>
+  <li><span class="key">Bars.</span> One year of 15-minute OHLCV bars, ~450 symbols, with 25 stationary
+  technical features.</li>
+  <li><span class="key">News sentiment.</span> <strong>346k</strong> news articles, 197 symbols,
+  Jan&ndash;Jun 2026, each scored by an LLM (sentiment $\in[-1,1]$, relevance, magnitude, and an event
+  taxonomy: earnings / guidance / analyst / macro).</li>
+  <li><span class="key">Crypto + funding.</span> 1-hour bars for 73 coins (2024&ndash;2026) with 8-hourly
+  perpetual-funding rates.</li>
+</ul>
+<p><span class="key">Leakage control is treated as a first-class concern.</span> Forty-six million LOB
+snapshots span only six weeks and are heavily autocorrelated, so the effective sample size is far smaller
+than the nominal count. We therefore (i) split strictly by <em>calendar date</em> and never by random
+shuffle; (ii) fit all normalization statistics on training data only; (iii) never let a window cross a
+(symbol, day) boundary; (iv) align news to the <em>first trading session after</em> publication; and
+(v) for cross-period claims, use expanding-window <em>walk-forward</em> evaluation.</p>
+
+<h2 id="method">3. Method</h2>
+<h3>3.1 Time-Series JEPA</h3>
+<p>An input window of $L$ consecutive feature vectors is split into non-overlapping time patches
+(PatchTST-style [<a href="#r4">4</a>]); each patch is linearly embedded to dimension $D$ <em>jointly over
+features</em> (preserving cross-feature microstructure interactions) and contextualized by a Transformer
+encoder. Following I-JEPA / V-JEPA [<a href="#r2">2</a>,&nbsp;<a href="#r3">3</a>]:</p>
+<ul>
+  <li>the <strong>context encoder</strong> $f_\theta$ sees only visible patches;</li>
+  <li>the <strong>target encoder</strong> $f_\xi$ is an EMA of $f_\theta$ (stop-gradient) and embeds all
+  patches; its embeddings at the masked positions are the prediction targets;</li>
+  <li>the <strong>predictor</strong> $g_\phi$ maps context embeddings + positioned mask tokens to the
+  target embeddings.</li>
+</ul>
+<p>The objective is a smooth-$\ell_1$ loss in embedding space, with the target embeddings
+layer-normalized and detached:</p>
+<p>$$\mathcal{L} \;=\; \mathrm{smooth}\text{-}\ell_1\!\Big(g_\phi\big(f_\theta(x_{\text{ctx}})\big),\;
+\operatorname{sg}\big[\,\mathrm{LN}(f_\xi(x))_{\text{tgt}}\big]\Big),\qquad
+\xi \leftarrow m\,\xi + (1-m)\,\theta .$$</p>
+<p>Collapse is prevented by the EMA target with stop-gradient (no negatives); we additionally monitor the
+per-dimension embedding standard deviation as a collapse diagnostic. We study both a <em>causal</em>
+(predict the future) and a <em>block / masked</em> (interpolation) variant; we found causal latent
+<em>extrapolation</em> unstable on near-random-walk prices and adopt the canonical masked variant.</p>
+
+<h3>3.2 Evaluation</h3>
+<p>For each target horizon we (i) extract frozen representations, (ii) fit a ridge / linear probe on the
+training split with the regularization selected on validation, and (iii) report on the held-out test
+split. Baselines: order-flow-imbalance (OFI), a ridge on raw features, a ridge on the flattened raw
+window, and an <em>identical encoder trained end-to-end on labels</em> (to isolate the value of
+pretraining). The predictive metric is the Spearman information coefficient,
+$\mathrm{IC}=\rho_{\text{Spearman}}(\hat{y},\,y)$. Economic evaluation uses an event-driven backtest with
+<em>non-overlapping</em> holds and explicit costs: a round trip crosses the full bid&ndash;ask spread
+(we have the book) plus a per-side fee.</p>
+
+<h2 id="results">4. Experiments &amp; results</h2>
+
+<h3>4.1 The microstructure signal is real, strong, and short-lived</h3>
+<p>Single-snapshot order-flow imbalance is a powerful predictor at sub-second horizons that decays toward
+zero within seconds &mdash; textbook market-microstructure behaviour.</p>
+<figure>
+  <img src="figures/ic_vs_horizon.png" alt="IC vs horizon on the LOB test set">
+  <figcaption><strong>Figure 1.</strong> Predictive IC versus horizon (SPY/QQQ LOB test set). All methods
+  decay from ~0.17 at 0.1&nbsp;s toward zero by 60&nbsp;s. The frozen JEPA representation (blue) tracks
+  <em>just below</em> the linear OFI / raw-last baselines; the whole-window ridge (green) is worse at short
+  horizons &mdash; raw temporal context hurts.</figcaption>
+</figure>
+
+<h3>4.2 JEPA = supervised &mdash; and both &le; linear (H1)</h3>
+<p>The frozen JEPA probe is statistically indistinguishable from an identical encoder trained end-to-end
+on labels, validating JEPA as a label-free representation learner. <span class="key">But neither deep model
+beats a 29-feature linear ridge.</span></p>
+<table>
+  <thead><tr><th>Method (test IC)</th><th>0.1&nbsp;s</th><th>1&nbsp;s</th><th>3&nbsp;s</th><th>10&nbsp;s</th><th>30&nbsp;s</th></tr></thead>
+  <tbody>
+    <tr><td>JEPA (frozen)</td><td>+0.158</td><td>+0.048</td><td>+0.027</td><td class="pos">+0.002</td><td class="neg">&minus;0.013</td></tr>
+    <tr><td>Supervised (end-to-end, same arch)</td><td>+0.162</td><td>+0.049</td><td>+0.029</td><td>+0.009</td><td class="neg">&minus;0.007</td></tr>
+    <tr><td><span class="key">Linear OFI</span></td><td><span class="key">+0.168</span></td><td><span class="key">+0.057</span></td><td><span class="key">+0.036</span></td><td><span class="key">+0.020</span></td><td><span class="key">+0.010</span></td></tr>
+    <tr><td>Raw-window ridge</td><td>+0.140</td><td>+0.032</td><td>+0.011</td><td>+0.008</td><td>+0.005</td></tr>
+  </tbody>
+</table>
+<p>The LOB signal at these horizons is near-Markovian <em>and</em> near-linear: the current book state
+contains the predictive information; history and nonlinearity add nothing exploitable.</p>
+
+<h3>4.3 Sample efficiency: JEPA &gt; supervised, but linear wins anyway (H2)</h3>
+<p>JEPA's representation is far more label-efficient than supervised deep learning &mdash; but a linear
+model on raw features is even more label-efficient <em>and</em> more accurate, so the advantage is moot.</p>
+<figure>
+  <img src="figures/sample_efficiency.png" alt="Sample efficiency curves">
+  <figcaption><strong>Figure 2.</strong> Test IC@0.1&nbsp;s versus number of labeled windows. JEPA (frozen)
+  beats supervised-deep at 1% labels (0.067 vs 0.038) and saturates by ~10%; the linear baseline dominates
+  at every label count.</figcaption>
+</figure>
+
+<h3>4.4 Scaling does not move the verdict</h3>
+<p>A 6&times; larger encoder (20.7M parameters, trained on a second GPU) yields test IC@0.1&nbsp;s of
+<strong>+0.156</strong> &mdash; identical to the 3.5M-parameter model's +0.158, and still below the linear
++0.172. The ceiling is the <em>signal</em>, not capacity: a clean negative control.</p>
+
+<h3>4.5 Economics: the spread eats the edge (H3)</h3>
+<p>Net of a realistic round-trip spread plus fees, mean P&amp;L per trade is negative at essentially every
+horizon for every method. A liquidity-<em>taking</em> strategy at sub-minute horizons on liquid ETFs is
+structurally unprofitable &mdash; consistent with how real high-frequency trading actually earns (providing
+liquidity, latency, rebates), not by crossing the spread.</p>
+<figure>
+  <img src="figures/backtest_net.png" alt="Net P&L per trade">
+  <figcaption><strong>Figure 3.</strong> Net-of-cost P&amp;L per trade versus horizon. Below the zero line
+  almost everywhere; only the simplest baselines reach marginal break-even at 60&nbsp;s under extreme
+  selectivity, and JEPA does not.</figcaption>
+</figure>
+
+<h3>4.6 Lower frequency: a single month lies; walk-forward tells the truth</h3>
+<p>On 15-minute bars, a first-pass single-month backtest showed an eye-catching +102&nbsp;bps/trade at the
+16-hour horizon. Under a 4-month leak-safe walk-forward it <span class="key">evaporated</span>: the linear
+baseline nets only ~+1&nbsp;bp/trade (within cost-assumption noise) and JEPA is negative at most horizons.
+This is the central methodological lesson of the study.</p>
+<figure>
+  <img src="figures/bars_walkforward.png" alt="Bars walk-forward net PnL">
+  <figcaption><strong>Figure 4.</strong> Bars walk-forward (4 independent test months, pooled): net bps/trade
+  vs horizon. Marginal at best; the dramatic single-month number does not survive multiple periods.</figcaption>
+</figure>
+
+<h3>4.7 News sentiment: a weak, persistent, contrarian signal (H4a)</h3>
+<p>News sentiment is the lone <em>non-price</em> signal with a persistent sign: its IC against forward
+returns is <span class="key">negative in all six months</span> (a &ldquo;fade-the-sentiment&rdquo; effect),
+strongest as the symbol-demeaned <em>sentiment surprise</em>. But a single test month overstated it
+(IC&nbsp;&approx;&nbsp;&minus;0.13) versus the pooled six-month value (&approx;&nbsp;&minus;0.04). As a
+standalone cross-sectional long&ndash;short, its non-overlapping Sharpe is only +0.16 at a realistic
+4&nbsp;bps cost &mdash; not robustly tradeable on five months of data, though the favorable cost/move ratio
+at daily horizons makes it the most promising lead.</p>
+
+<h3>4.8 Fusion hurts; crypto funding carry is illusory (H4b)</h3>
+<p>Fusing price with sentiment <em>reduces</em> test IC (price+sentiment +0.006 vs sentiment-only +0.080):
+daily price is efficient noise that dilutes the sentiment signal &mdash; so a multi-modal JEPA fusion is
+low-value here. In crypto, funding does not predict forward price (cross-sectional IC&nbsp;&approx;&nbsp;0),
+and the funding-<em>carry</em> spread is a mere +0.3&nbsp;bps/8&nbsp;h while the cross-sectional fade
+<em>loses</em> to price momentum (&minus;4.7&nbsp;bps/8&nbsp;h). No tradeable funding edge exists on this
+universe.</p>
+
+<h3>4.9 Summary of arms</h3>
+<table>
+  <thead><tr><th>Arm</th><th>Signal?</th><th>Beats linear?</th><th>Tradeable net of cost?</th></tr></thead>
+  <tbody>
+    <tr><td>HFT LOB (0.1&ndash;60&nbsp;s)</td><td>strong, micro</td><td>no</td><td class="neg">no &mdash; spread-dominated</td></tr>
+    <tr><td>Bars 15&nbsp;m (walk-forward)</td><td>weak</td><td>no</td><td class="neg">no &mdash; within-noise</td></tr>
+    <tr><td>Model scale (6&times;)</td><td>&mdash;</td><td>no change</td><td>&mdash;</td></tr>
+    <tr><td>News sentiment (daily)</td><td><span class="key">weak, contrarian, persistent</span></td><td>best non-price</td><td class="neg">no &mdash; Sharpe ~0.16</td></tr>
+    <tr><td>Price + sentiment fusion</td><td>&mdash;</td><td>fusion <em>hurts</em></td><td class="neg">no</td></tr>
+    <tr><td>Crypto funding carry</td><td>~none</td><td>&mdash;</td><td class="neg">no &mdash; fade loses to momentum</td></tr>
+  </tbody>
+</table>
+
+<h2 id="discussion">5. Discussion</h2>
+<p>The headline is a clean dissociation: <span class="key">the self-supervision works, but there is no
+capturable alpha to learn</span>. JEPA's representations are genuine &mdash; they recover supervised-quality
+predictive content with no labels and far fewer of them &mdash; yet across every axis we varied (frequency,
+asset class, information modality, and a large change in capacity) they never exceed a simple linear model,
+and the resulting signals do not survive transaction costs or multi-period validation. The binding
+constraints are <em>economic</em> (the bid&ndash;ask spread relative to short-horizon volatility) and
+<em>statistical</em> (the accessible signal is near-linear and near-Markovian), not architectural.</p>
+<p>This is consistent with a nuanced efficient-markets view: the order book equilibrates faster than a
+liquidity-taker can act, so microstructure predictability exists but is not capturable; information
+diffusion is slower, so news sentiment carries a faint, persistent &mdash; and contrarian &mdash; footprint,
+the one place a real edge might live with more data. Two methodological lessons generalize beyond JEPA:
+(i) <span class="key">pooling/representation choices dominate measured signal</span> &mdash; last-token
+pooling beat mean-pooling by 5&times; because the alpha lives in the most recent state; and
+(ii) <span class="key">single-period backtests are systematically optimistic</span> &mdash; every promising
+single-window result here collapsed under walk-forward.</p>
+
+<h2 id="limitations">6. Limitations &amp; future work</h2>
+<p>The freely-available data is short (six weeks of LOB; five months of news) and U.S.-equity / mid-cap-crypto
+biased; results may not transfer to other regimes. We tested liquidity-<em>taking</em> only. The most
+promising untested levers all require paid data or a different framing, and would change the verdict if
+anything does: <span class="key">L3 / market-by-order data for a liquidity-provision (queue/fill, adverse-selection)
+model</span> &mdash; where genuine HFT alpha actually lives; <span class="key">multi-year sentiment history</span>
+to properly power the contrarian effect; options / implied-volatility surfaces; and CME futures market-by-order.
+We release all code and a complete dated research log to support replication and extension.</p>
+
+<h2 id="refs">References</h2>
+<ol class="refs">
+  <li id="r1">Y. LeCun. <em>A Path Towards Autonomous Machine Intelligence.</em> 2022.</li>
+  <li id="r2">M. Assran et&nbsp;al. <em>Self-Supervised Learning from Images with a Joint-Embedding Predictive Architecture (I-JEPA).</em> CVPR 2023.</li>
+  <li id="r3">A. Bardes et&nbsp;al. <em>V-JEPA: Revisiting Feature Prediction for Learning Visual Representations from Video.</em> 2024.</li>
+  <li id="r4">Y. Nie et&nbsp;al. <em>A Time Series is Worth 64 Words: Long-term Forecasting with Transformers (PatchTST).</em> ICLR 2023.</li>
+  <li id="r5">Z. Zhang, S. Zohren, S. Roberts. <em>DeepLOB: Deep Convolutional Neural Networks for Limit Order Books.</em> IEEE TSP 2019.</li>
+  <li id="r6">A. Ntakaris et&nbsp;al. <em>Benchmark Dataset for Mid-Price Forecasting of Limit Order Book Data (FI-2010).</em> J. Forecasting 2018.</li>
+  <li id="r7">A. Bardes, J. Ponce, Y. LeCun. <em>VICReg: Variance-Invariance-Covariance Regularization for SSL.</em> ICLR 2022.</li>
+</ol>
+
+<footer>
+  <p>Code, configs, figures, and the complete dated research log:
+  <a href="https://github.com/bryanvine/jepa-trader">github.com/bryanvine/jepa-trader</a>.
+  Built with PyTorch on consumer GPUs (RTX 5060 + 4080 Super). All experiments are leak-controlled and
+  reproducible from raw data. © 2026 Bryan Vine.</p>
+</footer>
+
+</div>
+</body>
+</html>
